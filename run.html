@@ -5,27 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Premium Learning Platform</title>
 <style>
-body{
+body {
   font-family: Arial;
-  background:#0f172a;
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
+  background: #0f172a;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
-.container{
-  background:#1e293b;
-  padding:25px;
-  border-radius:10px;
-  width:350px;
-  text-align:center;
+.container {
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 10px;
+  width: 350px;
+  text-align: center;
 }
-input{width:90%; padding:8px; margin:6px;}
-button{padding:8px 15px; margin-top:5px; cursor:pointer;}
-.hidden{display:none;}
-hr{margin:15px 0; border:1px solid #555;}
-ul{list-style:none; padding:0;}
+input { width: 90%; padding: 8px; margin: 6px; }
+button { padding: 8px 15px; margin-top: 5px; cursor: pointer; }
+.hidden { display: none; }
+hr { margin: 15px 0; border: 1px solid #555; }
+ul { list-style: none; padding: 0; }
 </style>
 </head>
 <body>
@@ -113,14 +113,22 @@ document.getElementById("verifyBtn").addEventListener("click", () => {
 document.getElementById("registerBtn").addEventListener("click", async () => {
   const email = document.getElementById("regEmail").value;
   const pass = document.getElementById("regPass").value;
+  console.log("Trying to register:", email);
+  if(!email || !pass){
+    document.getElementById("message").innerText = "Enter email and password";
+    return;
+  }
   try{
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const user = userCredential.user;
+    console.log("Registered user:", user.email);
+    // Save user to Firestore
     await setDoc(doc(db, "users", user.uid), { email: email });
     document.getElementById("register").classList.add("hidden");
     document.getElementById("login").classList.remove("hidden");
     document.getElementById("message").innerText = "Account created. Please login.";
   } catch(error){
+    console.error("Registration error:", error.message);
     document.getElementById("message").innerText = error.message;
   }
 });
@@ -129,12 +137,18 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
 document.getElementById("loginBtn").addEventListener("click", async () => {
   const email = document.getElementById("loginEmail").value;
   const pass = document.getElementById("loginPass").value;
+  if(!email || !pass){
+    document.getElementById("message").innerText = "Enter email and password";
+    return;
+  }
   try{
     await signInWithEmailAndPassword(auth, email, pass);
+    console.log("Login successful:", email);
     document.getElementById("login").classList.add("hidden");
     document.getElementById("lessons").classList.remove("hidden");
     document.getElementById("message").innerText = "";
   } catch(error){
+    console.error("Login error:", error.message);
     document.getElementById("message").innerText = "Login failed: " + error.message;
   }
 });
@@ -149,22 +163,30 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
 
 // --- Admin Panel ---
 document.getElementById("loadUsersBtn").addEventListener("click", async () => {
-  const snapshot = await getDocs(collection(db, "users"));
-  const ul = document.getElementById("userList");
-  ul.innerHTML = "";
-  snapshot.forEach(docSnap => {
-    const li = document.createElement("li");
-    li.innerHTML = `${docSnap.data().email} <button onclick="deleteUser('${docSnap.id}')">Delete</button>`;
-    ul.appendChild(li);
-  });
+  try{
+    const snapshot = await getDocs(collection(db, "users"));
+    const ul = document.getElementById("userList");
+    ul.innerHTML = "";
+    snapshot.forEach(docSnap => {
+      const li = document.createElement("li");
+      li.innerHTML = `${docSnap.data().email} <button onclick="deleteUser('${docSnap.id}')">Delete</button>`;
+      ul.appendChild(li);
+    });
+  } catch(error){
+    console.error("Load users error:", error.message);
+  }
 });
 
 window.deleteUser = async (uid) => {
-  await deleteDoc(doc(db, "users", uid));
-  alert("User removed from Firestore (Auth deletion requires Admin SDK).");
-  document.getElementById("loadUsersBtn").click();
+  try{
+    await deleteDoc(doc(db, "users", uid));
+    alert("User removed from Firestore (Auth deletion requires Admin SDK).");
+    document.getElementById("loadUsersBtn").click();
+  } catch(error){
+    console.error("Delete user error:", error.message);
+  }
 };
-</script>
 
+</script>
 </body>
 </html>
