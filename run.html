@@ -22,7 +22,7 @@ body{
   text-align:center;
 }
 input{width:90%; padding:8px; margin:6px;}
-button{padding:8px 15px; margin-top:5px;}
+button{padding:8px 15px; margin-top:5px; cursor:pointer;}
 .hidden{display:none;}
 hr{margin:15px 0; border:1px solid #555;}
 ul{list-style:none; padding:0;}
@@ -38,7 +38,7 @@ ul{list-style:none; padding:0;}
 <div id="payment">
   <p>Access Price: $5</p>
   <input id="accessCode" placeholder="Enter payment code">
-  <button onclick="verifyPayment()">Verify Payment</button>
+  <button id="verifyBtn">Verify Payment</button>
 </div>
 
 <!-- REGISTRATION -->
@@ -46,7 +46,7 @@ ul{list-style:none; padding:0;}
   <h3>Create Account</h3>
   <input id="regEmail" placeholder="Email">
   <input id="regPass" type="password" placeholder="Password">
-  <button onclick="registerUser()">Register</button>
+  <button id="registerBtn">Register</button>
 </div>
 
 <!-- LOGIN -->
@@ -54,14 +54,14 @@ ul{list-style:none; padding:0;}
   <h3>Login</h3>
   <input id="loginEmail" placeholder="Email">
   <input id="loginPass" type="password" placeholder="Password">
-  <button onclick="loginUser()">Login</button>
+  <button id="loginBtn">Login</button>
 </div>
 
 <!-- LESSONS -->
 <div id="lessons" class="hidden">
   <h3>Machine Learning Lesson</h3>
   <p>Machine Learning is a field of AI that allows computers to learn patterns from data and make predictions.</p>
-  <button onclick="logoutUser()">Logout</button>
+  <button id="logoutBtn">Logout</button>
 </div>
 
 <p id="message"></p>
@@ -70,14 +70,13 @@ ul{list-style:none; padding:0;}
 <!-- ADMIN PANEL -->
 <div id="adminPanel">
   <h3>Admin Panel (Firestore Users)</h3>
-  <button onclick="listUsers()">Load Users</button>
+  <button id="loadUsersBtn">Load Users</button>
   <ul id="userList"></ul>
 </div>
 
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, setDoc, doc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -93,13 +92,13 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- PAYMENT ---
+// --- Payment code ---
 const validCode = "ACCESS123";
-function verifyPayment(){
+
+document.getElementById("verifyBtn").addEventListener("click", () => {
   const code = document.getElementById("accessCode").value;
   if(code === validCode){
     document.getElementById("payment").classList.add("hidden");
@@ -108,10 +107,10 @@ function verifyPayment(){
   } else {
     document.getElementById("message").innerText = "Invalid payment code";
   }
-}
+});
 
-// --- REGISTER ---
-async function registerUser(){
+// --- Register ---
+document.getElementById("registerBtn").addEventListener("click", async () => {
   const email = document.getElementById("regEmail").value;
   const pass = document.getElementById("regPass").value;
   try{
@@ -124,10 +123,10 @@ async function registerUser(){
   } catch(error){
     document.getElementById("message").innerText = error.message;
   }
-}
+});
 
-// --- LOGIN ---
-async function loginUser(){
+// --- Login ---
+document.getElementById("loginBtn").addEventListener("click", async () => {
   const email = document.getElementById("loginEmail").value;
   const pass = document.getElementById("loginPass").value;
   try{
@@ -138,18 +137,18 @@ async function loginUser(){
   } catch(error){
     document.getElementById("message").innerText = "Login failed: " + error.message;
   }
-}
+});
 
-// --- LOGOUT ---
-async function logoutUser(){
+// --- Logout ---
+document.getElementById("logoutBtn").addEventListener("click", async () => {
   await signOut(auth);
   document.getElementById("lessons").classList.add("hidden");
   document.getElementById("payment").classList.remove("hidden");
   document.getElementById("message").innerText = "Logged out";
-}
+});
 
-// --- ADMIN PANEL ---
-async function listUsers(){
+// --- Admin Panel ---
+document.getElementById("loadUsersBtn").addEventListener("click", async () => {
   const snapshot = await getDocs(collection(db, "users"));
   const ul = document.getElementById("userList");
   ul.innerHTML = "";
@@ -158,14 +157,14 @@ async function listUsers(){
     li.innerHTML = `${docSnap.data().email} <button onclick="deleteUser('${docSnap.id}')">Delete</button>`;
     ul.appendChild(li);
   });
-}
+});
 
-async function deleteUser(uid){
-  await deleteDoc(doc(db, "users", uid)); // remove Firestore record
+window.deleteUser = async (uid) => {
+  await deleteDoc(doc(db, "users", uid));
   alert("User removed from Firestore (Auth deletion requires Admin SDK).");
-  listUsers();
-}
-
+  document.getElementById("loadUsersBtn").click();
+};
 </script>
+
 </body>
 </html>
