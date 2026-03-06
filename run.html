@@ -1,96 +1,168 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Login System</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Learning Platform</title>
 <style>
 body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+  font-family: Arial;
+  background:#0f172a;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
 }
-
 .container{
-background:#1e293b;
-padding:20px;
-border-radius:10px;
-width:300px;
-text-align:center;
+  background:#1e293b;
+  padding:25px;
+  border-radius:10px;
+  width:350px;
+  text-align:center;
 }
-
-input{
-width:90%;
-padding:8px;
-margin:5px;
-}
-
-button{
-padding:8px 15px;
-margin-top:5px;
-}
-
+input{width:90%; padding:8px; margin:6px;}
+button{padding:8px 15px; margin-top:5px;}
+.hidden{display:none;}
+hr{margin:15px 0; border:1px solid #555;}
 </style>
 </head>
-
 <body>
 
 <div class="container">
 
-<h2>Login</h2>
+<h2>Premium Learning</h2>
 
-<input id="username" placeholder="Username">
-<input id="password" type="password" placeholder="Password">
+<!-- PAYMENT -->
+<div id="payment">
+  <p>Access Price: $5</p>
+  <input id="accessCode" placeholder="Enter payment code">
+  <button onclick="verifyPayment()">Verify Payment</button>
+</div>
 
-<button onclick="login()">Login</button>
-<button onclick="register()">Register</button>
+<!-- REGISTRATION -->
+<div id="register" class="hidden">
+  <h3>Create Account</h3>
+  <input id="regEmail" placeholder="Email">
+  <input id="regPass" type="password" placeholder="Password">
+  <button onclick="registerUser()">Register</button>
+</div>
+
+<!-- LOGIN -->
+<div id="login" class="hidden">
+  <h3>Login</h3>
+  <input id="loginEmail" placeholder="Email">
+  <input id="loginPass" type="password" placeholder="Password">
+  <button onclick="loginUser()">Login</button>
+</div>
+
+<!-- LESSONS -->
+<div id="lessons" class="hidden">
+  <h3>Machine Learning Lesson</h3>
+  <p>Machine Learning is a field of AI that allows computers to learn patterns from data and make predictions.</p>
+  <button onclick="logout()">Logout</button>
+</div>
 
 <p id="message"></p>
+<hr>
+<div id="adminPanel">
+  <h3>Admin Panel (Delete Users)</h3>
+  <button onclick="listUsers()">Load Users</button>
+  <ul id="userList"></ul>
+</div>
 
 </div>
 
-<script>
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, setDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let users = JSON.parse(localStorage.getItem("users")) || [];
+// Your Firebase config
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "josh-50a72.firebaseapp.com",
+  projectId: "josh-50a72",
+  storageBucket: "josh-50a72.appspot.com",
+  messagingSenderId: "1019284292237",
+  appId: "1:1019284292237:web:de908caa148f9a5d1598c4"
+};
 
-function register(){
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-let username = document.getElementById("username").value;
-let password = document.getElementById("password").value;
-
-if(username === "" || password === ""){
-document.getElementById("message").innerText = "Fill all fields";
-return;
+// --- PAYMENT CODE ---
+const validCode = "ACCESS123";
+function verifyPayment(){
+  const code = document.getElementById("accessCode").value;
+  if(code === validCode){
+    document.getElementById("payment").classList.add("hidden");
+    document.getElementById("register").classList.remove("hidden");
+    document.getElementById("message").innerText = "";
+  } else {
+    document.getElementById("message").innerText = "Invalid payment code";
+  }
 }
 
-users.push({username,password});
-
-localStorage.setItem("users", JSON.stringify(users));
-
-document.getElementById("message").innerText = "Account created";
-
+// --- REGISTER ---
+async function registerUser(){
+  const email = document.getElementById("regEmail").value;
+  const pass = document.getElementById("regPass").value;
+  try{
+    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+    const user = userCredential.user;
+    await setDoc(doc(db, "users", user.uid), { email: email });
+    document.getElementById("register").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+    document.getElementById("message").innerText = "Account created. Please login.";
+  } catch(error){
+    document.getElementById("message").innerText = error.message;
+  }
 }
 
-function login(){
-
-let username = document.getElementById("username").value;
-let password = document.getElementById("password").value;
-
-let user = users.find(u => u.username === username && u.password === password);
-
-if(user){
-document.getElementById("message").innerText = "Login successful";
+// --- LOGIN ---
+async function loginUser(){
+  const email = document.getElementById("loginEmail").value;
+  const pass = document.getElementById("loginPass").value;
+  try{
+    await signInWithEmailAndPassword(auth, email, pass);
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("lessons").classList.remove("hidden");
+    document.getElementById("message").innerText = "";
+  } catch(error){
+    document.getElementById("message").innerText = "Login failed: " + error.message;
+  }
 }
-else{
-document.getElementById("message").innerText = "Invalid account";
+
+// --- LOGOUT ---
+async function logout(){
+  await signOut(auth);
+  document.getElementById("lessons").classList.add("hidden");
+  document.getElementById("payment").classList.remove("hidden");
+  document.getElementById("message").innerText = "Logged out";
 }
 
+// --- ADMIN PANEL ---
+async function listUsers(){
+  const snapshot = await getDocs(collection(db, "users"));
+  const ul = document.getElementById("userList");
+  ul.innerHTML = "";
+  snapshot.forEach(docSnap => {
+    const li = document.createElement("li");
+    li.innerHTML = `${docSnap.data().email} <button onclick="deleteUser('${docSnap.id}')">Delete</button>`;
+    ul.appendChild(li);
+  });
+}
+
+async function deleteUser(uid){
+  await setDoc(doc(db, "users", uid), {}); // remove Firestore data
+  alert("Delete user from Firebase Auth manually via console"); // For Auth deletion, you need Admin SDK on server
+  listUsers();
 }
 
 </script>
-
 </body>
 </html>
