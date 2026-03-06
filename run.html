@@ -1,53 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simple To-Do App</title>
+<title>To-Do App</title>
 
 <style>
 body{
-    font-family: Arial, sans-serif;
-    background:#0f172a;
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+font-family:Arial;
+background:#0f172a;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
 .container{
-    background:#1e293b;
-    padding:25px;
-    border-radius:10px;
-    width:320px;
-}
-
-h2{
-    text-align:center;
-}
-
-input{
-    width:70%;
-    padding:8px;
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+width:300px;
 }
 
 button{
-    padding:8px;
-    background:#3b82f6;
-    border:none;
-    color:white;
-    cursor:pointer;
+padding:6px;
+margin-left:5px;
 }
 
 li{
-    margin-top:10px;
-    display:flex;
-    justify-content:space-between;
-}
-
-.delete{
-    background:red;
+margin-top:8px;
+display:flex;
+justify-content:space-between;
 }
 </style>
 </head>
@@ -55,7 +37,7 @@ li{
 <body>
 
 <div class="container">
-<h2>To-Do List</h2>
+<h2>My Tasks</h2>
 
 <input id="taskInput" placeholder="Enter task">
 <button onclick="addTask()">Add</button>
@@ -65,29 +47,51 @@ li{
 
 <script>
 
-function addTask(){
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-let taskInput = document.getElementById("taskInput");
-let taskText = taskInput.value;
+function renderTasks(){
 
-if(taskText === ""){
-alert("Please enter a task");
-return;
-}
+let list = document.getElementById("taskList");
+list.innerHTML = "";
+
+tasks.forEach((task,index)=>{
 
 let li = document.createElement("li");
-li.innerHTML = taskText + 
-"<button class='delete' onclick='removeTask(this)'>X</button>";
 
-document.getElementById("taskList").appendChild(li);
+li.innerHTML = task +
+"<button onclick='deleteTask("+index+")'>X</button>";
 
-taskInput.value = "";
+list.appendChild(li);
+
+});
+
+localStorage.setItem("tasks", JSON.stringify(tasks));
 
 }
 
-function removeTask(button){
-button.parentElement.remove();
+function addTask(){
+
+let input = document.getElementById("taskInput");
+
+if(input.value==="") return;
+
+tasks.push(input.value);
+
+input.value="";
+
+renderTasks();
+
 }
+
+function deleteTask(index){
+
+tasks.splice(index,1);
+
+renderTasks();
+
+}
+
+renderTasks();
 
 </script>
 
