@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>To-Do App</title>
+<title>Login System</title>
 
 <style>
 body{
@@ -19,79 +19,76 @@ background:#1e293b;
 padding:20px;
 border-radius:10px;
 width:300px;
+text-align:center;
+}
+
+input{
+width:90%;
+padding:8px;
+margin:5px;
 }
 
 button{
-padding:6px;
-margin-left:5px;
+padding:8px 15px;
+margin-top:5px;
 }
 
-li{
-margin-top:8px;
-display:flex;
-justify-content:space-between;
-}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-<h2>My Tasks</h2>
 
-<input id="taskInput" placeholder="Enter task">
-<button onclick="addTask()">Add</button>
+<h2>Login</h2>
 
-<ul id="taskList"></ul>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+<button onclick="register()">Register</button>
+
+<p id="message"></p>
+
 </div>
 
 <script>
 
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let users = JSON.parse(localStorage.getItem("users")) || [];
 
-function renderTasks(){
+function register(){
 
-let list = document.getElementById("taskList");
-list.innerHTML = "";
+let username = document.getElementById("username").value;
+let password = document.getElementById("password").value;
 
-tasks.forEach((task,index)=>{
+if(username === "" || password === ""){
+document.getElementById("message").innerText = "Fill all fields";
+return;
+}
 
-let li = document.createElement("li");
+users.push({username,password});
 
-li.innerHTML = task +
-"<button onclick='deleteTask("+index+")'>X</button>";
+localStorage.setItem("users", JSON.stringify(users));
 
-list.appendChild(li);
-
-});
-
-localStorage.setItem("tasks", JSON.stringify(tasks));
+document.getElementById("message").innerText = "Account created";
 
 }
 
-function addTask(){
+function login(){
 
-let input = document.getElementById("taskInput");
+let username = document.getElementById("username").value;
+let password = document.getElementById("password").value;
 
-if(input.value==="") return;
+let user = users.find(u => u.username === username && u.password === password);
 
-tasks.push(input.value);
-
-input.value="";
-
-renderTasks();
-
+if(user){
+document.getElementById("message").innerText = "Login successful";
+}
+else{
+document.getElementById("message").innerText = "Invalid account";
 }
 
-function deleteTask(index){
-
-tasks.splice(index,1);
-
-renderTasks();
-
 }
-
-renderTasks();
 
 </script>
 
