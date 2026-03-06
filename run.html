@@ -25,6 +25,7 @@ input{width:90%; padding:8px; margin:6px;}
 button{padding:8px 15px; margin-top:5px;}
 .hidden{display:none;}
 hr{margin:15px 0; border:1px solid #555;}
+ul{list-style:none; padding:0;}
 </style>
 </head>
 <body>
@@ -60,28 +61,29 @@ hr{margin:15px 0; border:1px solid #555;}
 <div id="lessons" class="hidden">
   <h3>Machine Learning Lesson</h3>
   <p>Machine Learning is a field of AI that allows computers to learn patterns from data and make predictions.</p>
-  <button onclick="logout()">Logout</button>
+  <button onclick="logoutUser()">Logout</button>
 </div>
 
 <p id="message"></p>
 <hr>
+
+<!-- ADMIN PANEL -->
 <div id="adminPanel">
-  <h3>Admin Panel (Delete Users)</h3>
+  <h3>Admin Panel (Firestore Users)</h3>
   <button onclick="listUsers()">Load Users</button>
   <ul id="userList"></ul>
-</div>
-
 </div>
 
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, setDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, setDoc, doc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Your Firebase config
+// --- Firebase config ---
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyB7HBdBkQheTQc9Nxhp9oF0Is46r37WdVE",
   authDomain: "josh-50a72.firebaseapp.com",
   projectId: "josh-50a72",
   storageBucket: "josh-50a72.appspot.com",
@@ -91,10 +93,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- PAYMENT CODE ---
+// --- PAYMENT ---
 const validCode = "ACCESS123";
 function verifyPayment(){
   const code = document.getElementById("accessCode").value;
@@ -138,7 +141,7 @@ async function loginUser(){
 }
 
 // --- LOGOUT ---
-async function logout(){
+async function logoutUser(){
   await signOut(auth);
   document.getElementById("lessons").classList.add("hidden");
   document.getElementById("payment").classList.remove("hidden");
@@ -158,8 +161,8 @@ async function listUsers(){
 }
 
 async function deleteUser(uid){
-  await setDoc(doc(db, "users", uid), {}); // remove Firestore data
-  alert("Delete user from Firebase Auth manually via console"); // For Auth deletion, you need Admin SDK on server
+  await deleteDoc(doc(db, "users", uid)); // remove Firestore record
+  alert("User removed from Firestore (Auth deletion requires Admin SDK).");
   listUsers();
 }
 
