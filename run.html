@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Premium Learning Platform</title>
+<title>Paid Learning Platform</title>
 <style>
 body {
   font-family: Arial;
@@ -13,6 +13,7 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  margin:0;
 }
 .container {
   background: #1e293b;
@@ -20,65 +21,61 @@ body {
   border-radius: 10px;
   width: 350px;
   text-align: center;
+  position: relative; /* make sure inputs are not blocked */
+  z-index: 1;
 }
-input { width: 90%; padding: 8px; margin: 6px; }
-button { padding: 8px 15px; margin-top: 5px; cursor: pointer; }
-.hidden { display: none; }
-hr { margin: 15px 0; border: 1px solid #555; }
-ul { list-style: none; padding: 0; }
+input {
+  width: 90%;
+  padding: 8px;
+  margin: 6px;
+  z-index: 2; /* ensures input is above other elements */
+}
+button { padding: 8px 15px; margin-top:5px; cursor:pointer; z-index:2; }
+.hidden { display:none; }
 </style>
 </head>
 <body>
 
 <div class="container">
 
-<h2>Premium Learning</h2>
+<h2>Premium Learning Platform</h2>
 
-<!-- PAYMENT -->
-<div id="payment">
-  <p>Access Price: $5</p>
-  <input id="accessCode" placeholder="Enter payment code">
-  <button id="verifyBtn">Verify Payment</button>
+<!-- ACCESS CODE -->
+<div id="access">
+  <p>Enter your access code:</p>
+  <input id="accessCode" placeholder="Your code here" type="text">
+  <button id="verifyBtn">Verify Code</button>
 </div>
 
-<!-- REGISTRATION -->
+<!-- REGISTER -->
 <div id="register" class="hidden">
   <h3>Create Account</h3>
-  <input id="regEmail" placeholder="Email">
-  <input id="regPass" type="password" placeholder="Password">
+  <input id="regEmail" placeholder="Email" type="email">
+  <input id="regPass" placeholder="Password" type="password">
   <button id="registerBtn">Register</button>
 </div>
 
 <!-- LOGIN -->
 <div id="login" class="hidden">
   <h3>Login</h3>
-  <input id="loginEmail" placeholder="Email">
-  <input id="loginPass" type="password" placeholder="Password">
+  <input id="loginEmail" placeholder="Email" type="email">
+  <input id="loginPass" placeholder="Password" type="password">
   <button id="loginBtn">Login</button>
 </div>
 
-<!-- LESSONS -->
-<div id="lessons" class="hidden">
-  <h3>Machine Learning Lesson</h3>
-  <p>Machine Learning is a field of AI that allows computers to learn patterns from data and make predictions.</p>
+<!-- LESSON -->
+<div id="lesson" class="hidden">
+  <h3>Lesson Content</h3>
+  <p>Welcome to your premium learning content! 🎓</p>
   <button id="logoutBtn">Logout</button>
 </div>
 
 <p id="message"></p>
-<hr>
 
-<!-- ADMIN PANEL -->
-<div id="adminPanel">
-  <h3>Admin Panel (Firestore Users)</h3>
-  <button id="loadUsersBtn">Load Users</button>
-  <ul id="userList"></ul>
-</div>
-
-<!-- FIREBASE -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, setDoc, doc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 // --- Firebase config ---
 const firebaseConfig = {
@@ -95,98 +92,72 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- Payment code ---
-const validCode = "ACCESS123";
+// Valid access codes
+const validCodes = ["ACCESS123","ACCESS456"];
 
-document.getElementById("verifyBtn").addEventListener("click", () => {
-  const code = document.getElementById("accessCode").value;
-  if(code === validCode){
-    document.getElementById("payment").classList.add("hidden");
+// Verify Access Code
+document.getElementById("verifyBtn").addEventListener("click", ()=>{
+  const code = document.getElementById("accessCode").value.trim();
+  if(validCodes.includes(code)){
+    document.getElementById("access").classList.add("hidden");
     document.getElementById("register").classList.remove("hidden");
-    document.getElementById("message").innerText = "";
+    document.getElementById("message").innerText="";
   } else {
-    document.getElementById("message").innerText = "Invalid payment code";
+    document.getElementById("message").innerText="Invalid code! Please pay first.";
   }
 });
 
-// --- Register ---
-document.getElementById("registerBtn").addEventListener("click", async () => {
+// Register
+document.getElementById("registerBtn").addEventListener("click", async ()=>{
   const email = document.getElementById("regEmail").value;
   const pass = document.getElementById("regPass").value;
-  console.log("Trying to register:", email);
-  if(!email || !pass){
-    document.getElementById("message").innerText = "Enter email and password";
-    return;
-  }
+
+  if(!email || !pass){ document.getElementById("message").innerText="Enter email and password"; return; }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!emailRegex.test(email)){ document.getElementById("message").innerText="Enter a valid email"; return; }
+
   try{
-    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+    const userCredential = await createUserWithEmailAndPassword(auth,email,pass);
     const user = userCredential.user;
-    console.log("Registered user:", user.email);
-    // Save user to Firestore
-    await setDoc(doc(db, "users", user.uid), { email: email });
+    await setDoc(doc(db,"users",user.uid),{ email: email });
     document.getElementById("register").classList.add("hidden");
     document.getElementById("login").classList.remove("hidden");
-    document.getElementById("message").innerText = "Account created. Please login.";
+    document.getElementById("message").innerText="Account created! Please login.";
   } catch(error){
-    console.error("Registration error:", error.message);
-    document.getElementById("message").innerText = error.message;
+    if(error.code==="auth/email-already-in-use"){
+      document.getElementById("message").innerText="Email already registered! Please login.";
+      document.getElementById("register").classList.add("hidden");
+      document.getElementById("login").classList.remove("hidden");
+    } else {
+      document.getElementById("message").innerText=error.message;
+    }
   }
 });
 
-// --- Login ---
-document.getElementById("loginBtn").addEventListener("click", async () => {
+// Login
+document.getElementById("loginBtn").addEventListener("click", async ()=>{
   const email = document.getElementById("loginEmail").value;
   const pass = document.getElementById("loginPass").value;
-  if(!email || !pass){
-    document.getElementById("message").innerText = "Enter email and password";
-    return;
-  }
+  if(!email || !pass){ document.getElementById("message").innerText="Enter email and password"; return; }
+
   try{
-    await signInWithEmailAndPassword(auth, email, pass);
-    console.log("Login successful:", email);
+    await signInWithEmailAndPassword(auth,email,pass);
     document.getElementById("login").classList.add("hidden");
-    document.getElementById("lessons").classList.remove("hidden");
-    document.getElementById("message").innerText = "";
+    document.getElementById("lesson").classList.remove("hidden");
+    document.getElementById("message").innerText="";
   } catch(error){
-    console.error("Login error:", error.message);
-    document.getElementById("message").innerText = "Login failed: " + error.message;
+    document.getElementById("message").innerText="Login failed: "+error.message;
   }
 });
 
-// --- Logout ---
-document.getElementById("logoutBtn").addEventListener("click", async () => {
+// Logout
+document.getElementById("logoutBtn").addEventListener("click", async ()=>{
   await signOut(auth);
-  document.getElementById("lessons").classList.add("hidden");
-  document.getElementById("payment").classList.remove("hidden");
-  document.getElementById("message").innerText = "Logged out";
+  document.getElementById("lesson").classList.add("hidden");
+  document.getElementById("access").classList.remove("hidden");
+  document.getElementById("message"]="Logged out";
 });
-
-// --- Admin Panel ---
-document.getElementById("loadUsersBtn").addEventListener("click", async () => {
-  try{
-    const snapshot = await getDocs(collection(db, "users"));
-    const ul = document.getElementById("userList");
-    ul.innerHTML = "";
-    snapshot.forEach(docSnap => {
-      const li = document.createElement("li");
-      li.innerHTML = `${docSnap.data().email} <button onclick="deleteUser('${docSnap.id}')">Delete</button>`;
-      ul.appendChild(li);
-    });
-  } catch(error){
-    console.error("Load users error:", error.message);
-  }
-});
-
-window.deleteUser = async (uid) => {
-  try{
-    await deleteDoc(doc(db, "users", uid));
-    alert("User removed from Firestore (Auth deletion requires Admin SDK).");
-    document.getElementById("loadUsersBtn").click();
-  } catch(error){
-    console.error("Delete user error:", error.message);
-  }
-};
-
 </script>
 </body>
 </html>
